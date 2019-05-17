@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+		xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+		xmlns:context="http://www.springframework.org/schema/context"
+		xmlns:tx="http://www.springframework.org/schema/tx"
+		xmlns:aop="http://www.springframework.org/schema/aop"
+		xsi:schemaLocation="
+			http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-4.3.xsd
+			http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-4.3.xsd
+			http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-4.3.xsd
+			http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.3.xsd
+			">
+		
+	<!-- 加载注解 -->                      
+	<context:component-scan base-package="com.ssm.service"></context:component-scan>
+			
+	<!-- 加载数据库小配置文件 -->
+	<context:property-placeholder location="classpath:jdbc.properties"/>
+	
+	<!-- 根据小配置文件创建数据库连接池或多个 -->
+	<bean class="com.alibaba.druid.pool.DruidDataSource" id="dataSource1">
+		<property name="driverClassName" value="${jdbc1.driver}"></property>
+		<property name="url" value="${jdbc1.url}"></property>
+		<property name="username" value="${jdbc1.username}"></property>
+		<property name="password" value="${jdbc1.password}"></property>
+	</bean>
+	<bean class="com.alibaba.druid.pool.DruidDataSource" id="dataSource2">
+		<property name="driverClassName" value="${jdbc2.driver}"></property>
+		<property name="url" value="${jdbc2.url}"></property>
+		<property name="username" value="${jdbc2.username}"></property>
+		<property name="password" value="${jdbc2.password}"></property>
+	</bean>
+
+	<bean id="dynamicDataSource" class="com.ssm.utils.dataSourceUtils.DynamicDataSource">
+		<property name="targetDataSources">
+			<map key-type="java.lang.String">
+				<entry key="dsmysql" value-ref="dataSource1"/>
+				<entry key="dspg" value-ref="dataSource2"/>
+			</map>
+		</property>
+		<!--默认数据源  mysql-->
+		<property name="defaultTargetDataSource" ref="dataSource1"/>
+	</bean>
+		
+		<!-- 创建SQLsessionFactoryBean对象 -->
+	<bean class="org.mybatis.spring.SqlSessionFactoryBean" id="sqlSessionFactoryBean">
+		
+		<!-- 注入数据源 -->
+		<property name="dataSource" ref="dynamicDataSource"></property>
+		
+		<!-- 加载映射文件 -->
+		<property name="mapperLocations">
+			<list>
+				<value>classpath:mapper/*.xml</value>
+			</list>
+		</property>
+		
+		<!-- 给指定的包下起别名 -->
+		<property name="typeAliasesPackage" value="com.ssm.beans"></property>
+	</bean>
+	
+	<!-- 配置dao代理对象  返回的是dao类名代理对象，所以id可以不用写-->
+	<bean  class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+		<property name="basePackage" value="com.ssm.dao"></property>
+	</bean>
+	
+	
+	<!-- 声明式事务处理 -->
+	<!-- 通过数据源 配置事务管理器 -->
+	<bean class="org.springframework.jdbc.datasource.DataSourceTransactionManager" id="txManager">
+		<property name="dataSource" ref="dynamicDataSource"></property>
+	</bean>
+	
+	
+	<!-- 通过事务管理器，定义事务曾强，指定事务规则-->
+	<tx:advice id="idAdvice" transaction-manager="txManager">
+		<tx:attributes>
+			
+			<!--指定事务规则  -->
+			<tx:method name="get*" read-only="true"/>
+			<tx:method name="set*" read-only="true"/>
+			<tx:method name="*"  propagation="REQUIRED"/>
+		</tx:attributes>
+	</tx:advice>
+	
+	<!-- 定义切入点，定位到service层中的方法，然后做编织处理 -->
+	<aop:config>
+	
+		<!--定位到service层中的方法  -->
+		<aop:pointcut expression="execution(* com.ssm.service.*.*(..))" id="servicePointcut"/>
+		
+		<!--做编织处理  -->
+		<aop:advisor advice-ref="idAdvice" pointcut-ref="servicePointcut"/>
+	</aop:config>
+</beans>
