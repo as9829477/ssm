@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="CompilerConfiguration">
+    <annotationProcessing>
+      <profile name="Annotation profile for wrs_rearend" enabled="true">
+        <sourceOutputDir name="target/generated-sources/annotations" />
+        <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
+        <outputRelativeToContentRoot value="true" />
+        <processorPath useClasspath="false">
+          <entry name="$MAVEN_REPOSITORY$/org/projectlombok/lombok/1.18.4/lombok-1.18.4.jar" />
+        </processorPath>
+        <module name="wrs_rearend" />
+        <module name="wrs_eureka" />
+      </profile>
+    </annotationProcessing>
+    <bytecodeTargetLevel>
+      <module name="wrs_beans" target="1.5" />
+      <module name="wrs_controller" target="1.5" />
+      <module name="wrs_dao" target="1.5" />
+      <module name="wrs_service" target="1.8" />
+    </bytecodeTargetLevel>
+  </component>
+  <component name="JavacSettings">
+    <option name="ADDITIONAL_OPTIONS_OVERRIDE">
+      <module name="wrs_eureka" options="-parameters" />
+      <module name="wrs_rearend" options="-parameters" />
+      <module name="wrs_service" options="-parameters" />
+    </option>
+  </component>
+</project>
